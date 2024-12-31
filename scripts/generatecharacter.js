@@ -381,7 +381,7 @@ const newData = {
         prompt: "",
     },
     */
-    template: {
+    templates: {
         // goalsTemplate: "",
         // factsTemplate: "",
         // messageHandlerTemplate: "",
