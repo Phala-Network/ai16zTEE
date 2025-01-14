@@ -9,3 +9,13 @@ export interface RemoteAttestationQuote {
     quote: string;
     timestamp: number;
 }
+
+export interface RemoteAttestationMessage {
+    agentId: string;
+    timestamp: number;
+    message: {
+        userId: string;
+        roomId: string;
+        content: string;
+    }
+}

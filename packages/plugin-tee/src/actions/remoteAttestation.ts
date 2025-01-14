@@ -1,6 +1,7 @@
 import type { IAgentRuntime, Memory, State, HandlerCallback } from "@elizaos/core";
 import { RemoteAttestationProvider } from "../providers/remoteAttestationProvider";
 import { fetch, type BodyInit } from "undici";
+import { RemoteAttestationMessage } from "../types/tee";
 
 function hexToUint8Array(hex: string) {
     hex = hex.trim();
@@ -42,23 +43,33 @@ export const remoteAttestationAction = {
     description: "Generate a remote attestation to prove that the agent is running in a TEE",
     handler: async (
         runtime: IAgentRuntime,
-        _message: Memory,
+        message: Memory,
         _state: State,
         _options: { [key: string]: unknown },
         callback: HandlerCallback,
     ) => {
         try {
+            // Attestation will be generated based on the message info
+            const attestationMessage: RemoteAttestationMessage = {
+                agentId: runtime.agentId,
+                timestamp: Date.now(),
+                message: {
+                    userId: message.userId,
+                    roomId: message.roomId,
+                    content: message.content.text,
+                },
+            };
             // Get the remote attestation of the agentId
-            const agentId = runtime.agentId;
             const teeMode = runtime.getSetting("TEE_MODE");
             const provider = new RemoteAttestationProvider(teeMode);
-            const attestation = await provider.generateAttestation(agentId, 'raw');
+
+            const attestation = await provider.generateAttestation(JSON.stringify(attestationMessage));
             const attestationData = hexToUint8Array(attestation.quote);
             const response = await uploadUint8Array(attestationData);
             const data = await response.json();
             callback({
                 text: `Here's my 🧾 RA Quote 🫡
-                https://proof.t16z.com/reports/${data.checksum}`,
+https://proof.t16z.com/reports/${data.checksum}`,
                 action: "NONE",
             });
             return true;
